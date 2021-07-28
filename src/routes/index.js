@@ -1,4 +1,4 @@
-const { signin } = require('../controllers/authController');
+const { signin, signup } = require('../controllers/authController');
 const { getAllUsers } = require('../controllers/userController');
 const { authMiddleware, adminAccessMiddleware } = require('../middleware/authMiddleware');
 
@@ -9,5 +9,6 @@ router.get('/users', authMiddleware, adminAccessMiddleware, getAllUsers);
 
 // AUTH
 router.post('/login', signin);
+router.post('/register', signup);
 
 module.exports = router;
