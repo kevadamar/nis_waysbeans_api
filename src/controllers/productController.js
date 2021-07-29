@@ -5,10 +5,12 @@ const {
   updateProductSchema,
 } = require('../utils/schema/productSchema');
 const fs = require('fs');
+const { Op } = require('sequelize');
 
 exports.getAllProducts = async (req, res) => {
   try {
     const { rows, count } = await Product.findAndCountAll({
+      where: { stock: { [Op.gt]: { stock: 0 } } },
       attributes: {
         exclude: ['createdAt', 'updatedAt'],
       },
@@ -39,7 +41,7 @@ exports.getProduct = async (req, res) => {
     const id = req.params.id;
 
     let resultProduct = await Product.findOne({
-      where: { id },
+      where: { id, stock: { [Op.gt]: { stock: 0 } } },
       attributes: {
         exclude: ['createdAt', 'updatedAt'],
       },
@@ -52,7 +54,7 @@ exports.getProduct = async (req, res) => {
       });
     }
 
-    resultProduct =  JSON.parse(JSON.stringify(resultProduct));
+    resultProduct = JSON.parse(JSON.stringify(resultProduct));
 
     res.status(200).json({
       status: 200,
