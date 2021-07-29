@@ -14,6 +14,7 @@ router.get('/users', authMiddleware, adminAccessMiddleware, getAllUsers);
 
 // Product route
 router.get('/products', getAllProducts);
+router.get('/product/:id', getProduct);
 
 // AUTH
 router.post('/login', signin);
