@@ -1,6 +1,6 @@
 const multer = require('multer');
 
-exports.uploadFile = (imageFile, videoFile) => {
+exports.uploadFileMiddleware = (imageFile, videoFile) => {
   // init multer diskstorage
   // Menentukan destination file upload
   // Menentukan nama file (rename agar tidak ada file yang sama / ganda /double)
@@ -61,6 +61,7 @@ exports.uploadFile = (imageFile, videoFile) => {
     upload(req, res, function (err) {
       // Pesan error jika validasi gagal
       if (req.fileValidationError) {
+        console.log('erro')
         return res.status(400).send(req.fileValidationError);
       }
 
