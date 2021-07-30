@@ -66,6 +66,7 @@ exports.signin = async (req, res) => {
           username: resultUser.username,
           fullname: resultUser.fullname,
           email: resultUser.email,
+          role: resultUser.role.name,
         },
         token,
       },

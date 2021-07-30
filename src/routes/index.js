@@ -1,8 +1,12 @@
 const router = require('express').Router();
 
 const { signin, signup } = require('../controllers/authController');
-const { getDetailCart, addCart, minusCart } = require('../controllers/cartController');
-const { checkout } = require('../controllers/orderController');
+const {
+  getDetailCart,
+  addCart,
+  minusCart,
+} = require('../controllers/cartController');
+const { checkout, getTransactions } = require('../controllers/orderController');
 const {
   getAllProducts,
   getProduct,
@@ -48,6 +52,13 @@ router.post(
   authMiddleware,
   uploadFileMiddleware('imageFile'),
   checkout,
+);
+
+router.get(
+  '/transactions',
+  authMiddleware,
+  adminAccessMiddleware,
+  getTransactions,
 );
 
 // AUTH

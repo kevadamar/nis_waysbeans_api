@@ -14,6 +14,7 @@ exports.getAllProducts = async (req, res) => {
       attributes: {
         exclude: ['createdAt', 'updatedAt'],
       },
+      order: [['createdAt', 'DESC']],
     });
     let resultProducts = JSON.parse(JSON.stringify(rows));
     resultProducts = resultProducts.map((product) => ({

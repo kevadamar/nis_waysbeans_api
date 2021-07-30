@@ -38,8 +38,6 @@ exports.addCart = async (req, res) => {
         product_id,
         total_price: resultProduct.price,
       });
-      const newStock = resultProduct.stock - 1;
-      await Product.update({ stock: newStock }, { where: { id: product_id } });
 
       return res.status(200).json({
         status: 200,
@@ -61,8 +59,7 @@ exports.addCart = async (req, res) => {
       },
     );
 
-    const newStock = resultProduct.stock - resultCart.qty;
-    await Product.update({ stock: newStock }, { where: { id: product_id } });
+    
 
     res.status(200).json({
       status: 200,
@@ -118,19 +115,20 @@ exports.minusCart = async (req, res) => {
     qty = resultCart.qty - 1;
     total_price = resultCart.total_price - resultProduct.price;
 
-    await Cart.update(
-      { qty, total_price },
-      {
-        where: {
-          user_id,
-          product_id,
+    if (qty === 0) {
+      await Cart.destroy({ where: { user_id, product_id } });
+    } else {
+      await Cart.update(
+        { qty, total_price },
+        {
+          where: {
+            user_id,
+            product_id,
+          },
         },
-      },
-    );
-
-    const newStock = resultProduct.stock + 1;
-    await Product.update({ stock: newStock }, { where: { id: product_id } });
-
+      );
+    }
+    
     res.status(200).json({
       status: 200,
       message: 'Successfully Minus qty item Cart!',
@@ -176,3 +174,16 @@ exports.getDetailCart = async (req, res) => {
     });
   }
 };
+
+// exports.getCountCart = async (req, res) => {
+//   try {
+//       const
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({
+//       status: 500,
+//       message: 'Internal Server Error',
+//       error,
+//     });
+//   }
+// };
