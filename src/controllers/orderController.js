@@ -157,7 +157,7 @@ exports.updateStatusTransaction = async (req, res) => {
 
     const resultOrder = await Order.findOne({
       where: whereCondition,
-      attributes: ['id', 'status','name'],
+      attributes: ['id', 'status', 'name'],
     });
 
     if (!resultOrder) {
@@ -166,6 +166,7 @@ exports.updateStatusTransaction = async (req, res) => {
         message: 'Order Not FOund. Cant update',
       });
     }
+    
     if (isAdmin && resultOrder.status.toLowerCase() !== 'waiting approve') {
       return res.status(400).json({
         status: 400,
@@ -180,19 +181,18 @@ exports.updateStatusTransaction = async (req, res) => {
       });
     }
 
-    // user update status completed
     if (!isAdmin) {
-      const resl = await Order.update({status}, { where: whereCondition });
-      console.log('user updated', resl, user_id);
+      // user update status completed
+      const resl = await Order.update({ status }, { where: whereCondition });
     } else {
-      const resl = await Order.update({status}, { where: whereCondition });
-      console.log('admin updated', resl, status);
+      // admin update status approve
+      const resl = await Order.update({ status }, { where: whereCondition });
     }
 
     res.status(200).json({
       status: 200,
       message: 'Successfully Updated!',
-      resultOrder
+      resultOrder,
     });
   } catch (error) {
     console.log(error);
