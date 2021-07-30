@@ -17,6 +17,9 @@ module.exports = {
       fullname: {
         type: Sequelize.STRING,
       },
+      photo: {
+        type: Sequelize.STRING,
+      },
       role_id: {
         type: Sequelize.INTEGER,
         references: {

@@ -5,23 +5,41 @@ const {
   getDetailCart,
   addCart,
   minusCart,
+  getCountCart,
 } = require('../controllers/cartController');
-const { checkout, getTransactions } = require('../controllers/orderController');
+const {
+  checkout,
+  getTransactions,
+  updateStatusTransaction,
+} = require('../controllers/orderController');
 const {
   getAllProducts,
   getProduct,
   createProduct,
   updateProduct,
 } = require('../controllers/productController');
-const { getAllUsers } = require('../controllers/userController');
+const {
+  getAllUsers,
+  getUser,
+  updateUser,
+} = require('../controllers/userController');
 const {
   authMiddleware,
   adminAccessMiddleware,
 } = require('../middleware/authMiddleware');
 const { uploadFileMiddleware } = require('../middleware/uploadFileMiddleware');
 
+/** =================================================================================================== */
+
 // Users route
 router.get('/users', authMiddleware, adminAccessMiddleware, getAllUsers);
+router.get('/user', authMiddleware, getUser);
+router.patch(
+  '/user',
+  authMiddleware,
+  uploadFileMiddleware('imageFile'),
+  updateUser,
+);
 
 // Product route
 router.get('/products', getAllProducts);
@@ -45,6 +63,7 @@ router.post(
 router.post('/add-cart/:product_id', authMiddleware, addCart);
 router.post('/minus-cart/:product_id', authMiddleware, minusCart);
 router.get('/detail-cart', authMiddleware, getDetailCart);
+router.get('/count-cart', authMiddleware, getCountCart);
 
 // checkout
 router.post(
@@ -54,11 +73,12 @@ router.post(
   checkout,
 );
 
-router.get(
-  '/transactions',
+// transactions
+router.get('/transactions', authMiddleware, getTransactions);
+router.patch(
+  '/transactions/:order_id/update',
   authMiddleware,
-  adminAccessMiddleware,
-  getTransactions,
+  updateStatusTransaction,
 );
 
 // AUTH

@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const { Order, Order_product, Product, Cart, User } = require('../../models');
 
 const { checkoutSchema } = require('../utils/schema/orderSchema');
@@ -70,7 +71,16 @@ exports.checkout = async (req, res) => {
 
 exports.getTransactions = async (req, res) => {
   try {
+    const { id, fullname, email } = req.user;
+    const isAdmin = id === 1 && true;
+    const user = { id, fullname, email };
+
     let { rows, count } = await Order.findAndCountAll({
+      where: {
+        user_id: {
+          [isAdmin ? Op.ne : Op.eq]: id,
+        },
+      },
       include: [
         {
           model: User,
@@ -99,7 +109,10 @@ exports.getTransactions = async (req, res) => {
     let resultOrders = JSON.parse(JSON.stringify(rows));
 
     resultOrders = resultOrders.map((order) => {
+      let totalPrice = 0;
       let newProducts = order.products.map((product) => {
+        totalPrice += product.orders_products.price * product.orderQuantity;
+
         return {
           id: product.id,
           orderQuantity: product.orderQuantity,
@@ -107,8 +120,12 @@ exports.getTransactions = async (req, res) => {
         };
       });
 
-      return { ...order, products: newProducts };
+      return { ...order, totalPrice, products: newProducts };
     });
+
+    resultOrders = isAdmin
+      ? resultOrders
+      : { user, transactions: resultOrders };
 
     res.status(200).json({
       status: 200,
@@ -126,22 +143,63 @@ exports.getTransactions = async (req, res) => {
   }
 };
 
-// exports.getMyTransactions = async (req, res) => {
-//   try {
-//     const user_id = req.user.id;
+exports.updateStatusTransaction = async (req, res) => {
+  try {
+    const order_id = req.params.order_id;
+    const user_id = req.user.id;
+    const status = req.body.status;
 
+    const isAdmin = user_id === 1 && true;
 
-//     res.status(200).json({
-//       status: 200,
-//       message: 'Successfully!',
-//       data: resultOrders,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({
-//       status: 500,
-//       message: 'Internal Server Error',
-//       error,
-//     });
-//   }
-// };
+    const whereCondition = isAdmin
+      ? { id: order_id }
+      : { id: order_id, user_id };
+
+    const resultOrder = await Order.findOne({
+      where: whereCondition,
+      attributes: ['id', 'status','name'],
+    });
+
+    if (!resultOrder) {
+      return res.status(404).json({
+        status: 404,
+        message: 'Order Not FOund. Cant update',
+      });
+    }
+    if (isAdmin && resultOrder.status.toLowerCase() !== 'waiting approve') {
+      return res.status(400).json({
+        status: 400,
+        message: `Admin Cant update Order User ${resultOrder.status}!`,
+      });
+    }
+
+    if (!isAdmin && resultOrder.status.toLowerCase() !== 'approve') {
+      return res.status(400).json({
+        status: 400,
+        message: `Order User ${resultOrder.status}!`,
+      });
+    }
+
+    // user update status completed
+    if (!isAdmin) {
+      const resl = await Order.update({status}, { where: whereCondition });
+      console.log('user updated', resl, user_id);
+    } else {
+      const resl = await Order.update({status}, { where: whereCondition });
+      console.log('admin updated', resl, status);
+    }
+
+    res.status(200).json({
+      status: 200,
+      message: 'Successfully Updated!',
+      resultOrder
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+      error,
+    });
+  }
+};

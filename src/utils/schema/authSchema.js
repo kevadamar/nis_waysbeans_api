@@ -10,3 +10,9 @@ exports.registerSchema = joi.object({
   email: joi.string().email().required(),
   password: joi.string().min(8).required(),
 });
+
+exports.updateUserSchema = joi.object({
+  fullname: joi.string().min(3),
+  email: joi.string().email(),
+  password: joi.string().min(8),
+});

@@ -59,8 +59,6 @@ exports.addCart = async (req, res) => {
       },
     );
 
-    
-
     res.status(200).json({
       status: 200,
       message: 'Successfully Added qty item Cart!',
@@ -128,7 +126,7 @@ exports.minusCart = async (req, res) => {
         },
       );
     }
-    
+
     res.status(200).json({
       status: 200,
       message: 'Successfully Minus qty item Cart!',
@@ -175,15 +173,24 @@ exports.getDetailCart = async (req, res) => {
   }
 };
 
-// exports.getCountCart = async (req, res) => {
-//   try {
-//       const
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({
-//       status: 500,
-//       message: 'Internal Server Error',
-//       error,
-//     });
-//   }
-// };
+exports.getCountCart = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    const strQuery = `SELECT IFNULL(SUM(qty),0) AS countCart FROM cart WHERE user_id = ${user_id}`;
+    const countCart = await sequelize.query(strQuery, {
+      type: QueryTypes.SELECT,
+    });
+    res.status(200).json({
+      status: 200,
+      message: 'Success',
+      data: { ...countCart[0] },
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+      error,
+    });
+  }
+};
