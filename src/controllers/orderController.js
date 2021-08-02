@@ -102,7 +102,7 @@ exports.getTransactions = async (req, res) => {
         },
       ],
       attributes: {
-        exclude: ['createdAt', 'updatedAt', 'user_id'],
+        exclude: ['updatedAt', 'user_id'],
       },
       order: [['createdAt', 'DESC']],
     });
@@ -113,11 +113,17 @@ exports.getTransactions = async (req, res) => {
       let totalPrice = 0;
       let newProducts = order.products.map((product) => {
         totalPrice += product.orders_products.price * product.orderQuantity;
-
+        const newOrderProduct = {
+          ...product.orders_products,
+          name: product.orders_products.name,
+          price: product.orders_products.price,
+          description: product.orders_products.description,
+          photo: `${baseUrlImage}${product.orders_products.photo}`,
+        };
         return {
           id: product.id,
           orderQuantity: product.orderQuantity,
-          ...product.orders_products,
+          ...newOrderProduct,
         };
       });
 
@@ -136,7 +142,7 @@ exports.getTransactions = async (req, res) => {
     res.status(200).json({
       status: 200,
       message: 'Successfully!',
-      countData: resultOrders.length,
+      countData: count,
       data: resultOrders,
     });
   } catch (error) {
@@ -199,6 +205,77 @@ exports.updateStatusTransaction = async (req, res) => {
       status: 200,
       message: 'Successfully Updated!',
       resultOrder,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+      error,
+    });
+  }
+};
+
+exports.getDetailTransactions = async (req, res) => {
+  try {
+    const order_id = req.params.order_id;
+
+    let resultOrdered = await Order.findOne({
+      where: { id: order_id },
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'fullname', 'email'],
+        },
+        {
+          model: Order_product,
+          as: 'products',
+          include: [
+            {
+              model: Product,
+              as: 'orders_products',
+              attributes: ['name', 'photo', 'price', 'description'],
+            },
+          ],
+          attributes: [['product_id', 'id'], 'orderQuantity'],
+        },
+      ],
+      attributes: {
+        exclude: ['updatedAt', 'user_id'],
+      },
+      order: [['createdAt', 'DESC']],
+    });
+
+    resultOrdered = JSON.parse(JSON.stringify(resultOrdered));
+    let totalPrice = 0;
+    let newProducts = resultOrdered.products.map((product) => {
+      totalPrice += product.orders_products.price * product.orderQuantity;
+      const newOrderProduct = {
+        ...product.orders_products,
+        name: product.orders_products.name,
+        price: product.orders_products.price,
+        description: product.orders_products.description,
+        photo: `${baseUrlImage}${product.orders_products.photo}`,
+      };
+      return {
+        id: product.id,
+        orderQuantity: product.orderQuantity,
+        ...newOrderProduct,
+      };
+    });
+
+    resultOrdered = {
+      ...resultOrdered,
+      attachment: `${baseUrlImage}${resultOrdered.attachment}`,
+      totalPrice,
+      products: newProducts,
+    };
+
+    res.status(200).json({
+      status: 200,
+      message: 'Successfully!',
+      data: resultOrdered,
     });
   } catch (error) {
     console.log(error);

@@ -12,6 +12,7 @@ const {
   checkout,
   getTransactions,
   updateStatusTransaction,
+  getDetailTransactions,
 } = require('../controllers/orderController');
 const {
   getAllProducts,
@@ -77,6 +78,7 @@ router.post(
 
 // transactions
 router.get('/transactions', authMiddleware, getTransactions);
+router.get('/transactions/:order_id', authMiddleware, getDetailTransactions);
 router.patch(
   '/transactions/:order_id/update',
   authMiddleware,
