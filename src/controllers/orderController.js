@@ -5,8 +5,8 @@ const { checkoutSchema } = require('../utils/schema/orderSchema');
 
 exports.checkout = async (req, res) => {
   try {
-    const { name, email, address, phone, postCode, products } = req.body;
-    const payload = { name, email, address, phone, postCode };
+    const { name, email, address, phone, possCode, products } = req.body;
+    const payload = { name, email, address, phone, possCode };
     const user_id = req.user.id;
 
     const { error } = checkoutSchema.validate(req.body);

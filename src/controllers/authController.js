@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { User, Role } = require('../../models');
+const { baseUrlImage } = require('../utils/config');
 const { loginSchema, registerSchema } = require('../utils/schema/authSchema');
 
 //sign in
@@ -58,6 +59,7 @@ exports.signin = async (req, res) => {
       process.env.SECRET_KEY,
     );
 
+    console.log(resultUser.photo);
     res.status(200).json({
       status: 200,
       message: 'Successfully Login',
@@ -66,6 +68,9 @@ exports.signin = async (req, res) => {
           fullname: resultUser.fullname,
           email: resultUser.email,
           role: resultUser.role.name,
+          photo: !resultUser.photo
+            ? null
+            : `${baseUrlImage}${resultUser.photo}`,
         },
         token,
       },

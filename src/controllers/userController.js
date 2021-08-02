@@ -59,7 +59,10 @@ exports.getUser = async (req, res) => {
       });
     }
     resultUser = JSON.parse(JSON.stringify(resultUser));
-    resultUser = { ...resultUser, photo: `${baseUrlImage}${resultUser.photo}` };
+    resultUser = {
+      ...resultUser,
+      photo: !resultUser.photo ? null : `${baseUrlImage}${resultUser.photo}`,
+    };
 
     res.status(200).json({
       status: 200,

@@ -6,6 +6,7 @@ const {
   addCart,
   minusCart,
   getCountCart,
+  deleteCart,
 } = require('../controllers/cartController');
 const {
   checkout,
@@ -64,6 +65,7 @@ router.post('/add-cart/:product_id', authMiddleware, addCart);
 router.post('/minus-cart/:product_id', authMiddleware, minusCart);
 router.get('/detail-cart', authMiddleware, getDetailCart);
 router.get('/count-cart', authMiddleware, getCountCart);
+router.delete('/cart/:cart_id/delete', authMiddleware, deleteCart);
 
 // checkout
 router.post(

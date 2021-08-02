@@ -1,6 +1,7 @@
 const { Cart, User, Product, sequelize } = require('../../models');
 const { QueryTypes } = require('sequelize');
 const { Op } = require('sequelize');
+const { baseUrlImage } = require('../utils/config');
 
 exports.addCart = async (req, res) => {
   try {
@@ -42,6 +43,13 @@ exports.addCart = async (req, res) => {
       return res.status(200).json({
         status: 200,
         message: 'Successfully Added TO Cart!',
+      });
+    }
+
+    if (resultCart.qty === resultProduct.stock) {
+      return res.status(200).json({
+        status: -1,
+        message: `Stok barang ini sisa ${resultProduct.stock} dan kamu sudah punya ${resultCart.qty} di keranjangmu.`,
       });
     }
 
@@ -146,15 +154,49 @@ exports.getDetailCart = async (req, res) => {
     const user_id = req.user.id;
 
     //
-    const strQuery = `SELECT c.user_id,c.product_id,SUM(c.total_price) AS total_price_cart, SUM(c.qty) AS qty, (SELECT name FROM product WHERE id = c.product_id) AS name, (SELECT photo FROM product WHERE id = c.product_id) AS photo FROM cart c WHERE c.user_id = ${user_id} AND product_id in (SELECT id FROM product) GROUP BY c.product_id`;
+    const strQuery = `SELECT c.id,c.user_id,c.product_id,SUM(c.total_price) AS total_price_cart, SUM(c.qty) AS qty, (SELECT name FROM product WHERE id = c.product_id) AS name, (SELECT photo FROM product WHERE id = c.product_id) AS photo,(SELECT price FROM product WHERE id = c.product_id) AS price_product, c.createdAt FROM cart c WHERE c.user_id = ${user_id} AND product_id in (SELECT id FROM product) GROUP BY c.product_id ORDER BY c.createdAt DESC`;
 
-    const resultDetailCart = await sequelize.query(strQuery, {
-      type: QueryTypes.SELECT,
+    // let resultDetailCart = await sequelize.query(strQuery, {
+    //   type: QueryTypes.SELECT,
+    // });
+
+    let resultDetailCart = await Cart.findAll({
+      where: { user_id },
+      include: [
+        {
+          model: Product,
+          as: 'product',
+          attributes: ['name', 'photo', ['price', 'product_price']],
+        },
+      ],
+      attributes: {
+        exclude: ['updatedAt'],
+      },
+
+      order: [['createdAt', 'DESC']],
     });
 
     let totalPrice = 0;
-    resultDetailCart.map((cart) => {
-      totalPrice += parseInt(cart.total_price_cart);
+    resultDetailCart = JSON.parse(JSON.stringify(resultDetailCart));
+
+    resultDetailCart = resultDetailCart.map((cart) => {
+      totalPrice += parseInt(cart.total_price);
+      const newProduct = {
+        ...cart.product,
+        photo: !cart.product.photo
+          ? null
+          : `${baseUrlImage}${cart.product.photo}`,
+      };
+
+      return {
+        id: cart.id,
+        user_id: cart.user_id,
+        product_id: cart.product_id,
+        ...newProduct,
+        qty: cart.qty,
+        total_price: cart.total_price,
+        createdAt: cart.createdAt,
+      };
     });
 
     res.status(200).json({
@@ -180,10 +222,72 @@ exports.getCountCart = async (req, res) => {
     const countCart = await sequelize.query(strQuery, {
       type: QueryTypes.SELECT,
     });
+
+    let resultCarts = await Cart.findAll({
+      where: {
+        user_id,
+      },
+      include: [
+        {
+          model: Product,
+          as: 'product',
+          attributes: ['stock'],
+        },
+      ],
+      attributes: ['qty'],
+    });
+
+    resultCarts = JSON.parse(JSON.stringify(resultCarts));
+    resultCarts = resultCarts.map((cart) => ({
+      qty: cart.qty,
+      max_stock: cart.product.stock,
+    }));
+
+    const newCount = { ...countCart[0] };
+
+    const data = {
+      countCart: parseInt(newCount.countCart),
+      detailCarts: resultCarts,
+    };
     res.status(200).json({
       status: 200,
       message: 'Success',
-      data: { ...countCart[0] },
+      data,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+      error,
+    });
+  }
+};
+
+exports.deleteCart = async (req, res) => {
+  try {
+    const cart_id = req.params.cart_id;
+    const user_id = req.user.id;
+    console.log(cart_id, user_id);
+
+    await Cart.sequelize.query('SET FOREIGN_KEY_CHECKS = 0', null, {
+      raw: true,
+    });
+
+    const resultDelete = await Cart.destroy({
+      where: { id: cart_id, user_id },
+    });
+
+    if (!resultDelete) {
+      return res.status(404).json({
+        status: 404,
+        message: 'Cart Not Found!',
+      });
+    }
+
+    res.status(200).json({
+      status: 200,
+      message: 'Successfully Deleted Cart!',
     });
   } catch (error) {
     console.log(error);

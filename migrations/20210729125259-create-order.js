@@ -21,7 +21,7 @@ module.exports = {
       email: {
         type: Sequelize.STRING,
       },
-      postCode: {
+      possCode: {
         type: Sequelize.STRING,
       },
       address: {
