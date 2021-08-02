@@ -1,5 +1,6 @@
 const { Op } = require('sequelize');
 const { Order, Order_product, Product, Cart, User } = require('../../models');
+const { baseUrlImage } = require('../utils/config');
 
 const { checkoutSchema } = require('../utils/schema/orderSchema');
 
@@ -120,7 +121,12 @@ exports.getTransactions = async (req, res) => {
         };
       });
 
-      return { ...order, totalPrice, products: newProducts };
+      return {
+        ...order,
+        attachment: `${baseUrlImage}${order.attachment}`,
+        totalPrice,
+        products: newProducts,
+      };
     });
 
     resultOrders = isAdmin
@@ -166,7 +172,7 @@ exports.updateStatusTransaction = async (req, res) => {
         message: 'Order Not FOund. Cant update',
       });
     }
-    
+
     if (isAdmin && resultOrder.status.toLowerCase() !== 'waiting approve') {
       return res.status(400).json({
         status: 400,
