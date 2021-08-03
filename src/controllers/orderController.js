@@ -169,6 +169,20 @@ exports.updateStatusTransaction = async (req, res) => {
 
     const resultOrder = await Order.findOne({
       where: whereCondition,
+      include: [
+        {
+          model: Order_product,
+          as: 'products',
+          include: [
+            {
+              model: Product,
+              as: 'orders_products',
+              attributes: ['name', 'stock'],
+            },
+          ],
+          attributes: ['order_id', 'product_id', 'orderQuantity'],
+        },
+      ],
       attributes: ['id', 'status', 'name'],
     });
 
@@ -182,11 +196,11 @@ exports.updateStatusTransaction = async (req, res) => {
     if (isAdmin && resultOrder.status.toLowerCase() !== 'waiting approve') {
       return res.status(400).json({
         status: 400,
-        message: `Admin Cant update Order User ${resultOrder.status}!`,
+        message: `Admin Cant update Order User status ${resultOrder.status}!`,
       });
     }
 
-    if (!isAdmin && resultOrder.status.toLowerCase() !== 'approve') {
+    if (!isAdmin && resultOrder.status.toLowerCase() !== 'on the way') {
       return res.status(400).json({
         status: 400,
         message: `Order User ${resultOrder.status}!`,
@@ -197,8 +211,19 @@ exports.updateStatusTransaction = async (req, res) => {
       // user update status completed
       const resl = await Order.update({ status }, { where: whereCondition });
     } else {
+      // convert to json object
+      const newResultOrder = JSON.parse(JSON.stringify(resultOrder));
       // admin update status approve
       const resl = await Order.update({ status }, { where: whereCondition });
+      newResultOrder.products.map(async (product) => {
+        const newStock = product.orders_products.stock + product.orderQuantity;
+
+        await Product.update(
+          { stock: newStock },
+          { where: { id: product.product_id } },
+        );
+      });
+      console.log(newResultOrder.products[0]);
     }
 
     res.status(200).json({

@@ -116,7 +116,15 @@ exports.updateUser = async (req, res) => {
       payload = { ...payload, photo: req.files.imageFile[0].filename };
     }
 
-    await User.update(payload, { where: { id } });
+    if (!payload?.password) {
+      await User.update(payload, { where: { id } });
+    } else {
+      const SALT = 10;
+      const hashedPassword = await bcrypt.hash(payload.password, SALT);
+      payload = { ...payload, password: hashedPassword };
+      
+      await User.update(payload, { where: { id } });
+    }
 
     res.status(200).json({
       status: 200,

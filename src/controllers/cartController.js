@@ -153,13 +153,6 @@ exports.getDetailCart = async (req, res) => {
   try {
     const user_id = req.user.id;
 
-    //
-    const strQuery = `SELECT c.id,c.user_id,c.product_id,SUM(c.total_price) AS total_price_cart, SUM(c.qty) AS qty, (SELECT name FROM product WHERE id = c.product_id) AS name, (SELECT photo FROM product WHERE id = c.product_id) AS photo,(SELECT price FROM product WHERE id = c.product_id) AS price_product, c.createdAt FROM cart c WHERE c.user_id = ${user_id} AND product_id in (SELECT id FROM product) GROUP BY c.product_id ORDER BY c.createdAt DESC`;
-
-    // let resultDetailCart = await sequelize.query(strQuery, {
-    //   type: QueryTypes.SELECT,
-    // });
-
     let resultDetailCart = await Cart.findAll({
       where: { user_id },
       include: [
