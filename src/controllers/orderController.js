@@ -75,6 +75,24 @@ exports.getTransactions = async (req, res) => {
     const { id, fullname, email } = req.user;
     const isAdmin = id === 1 && true;
     const user = { id, fullname, email };
+    let { page } = req.query;
+
+    const maxLimit = 50;
+
+    page = parseInt(page) + 1;
+
+    const limit = page === undefined ? 20 : 5;
+    const offset = page === undefined ? 0 : (page - 1) * limit;
+
+    let countData = await Order.findAll({
+      where: {
+        user_id: {
+          [isAdmin ? Op.ne : Op.eq]: id,
+        },
+      },
+      limit: maxLimit,
+      attributes: ['id'],
+    });
 
     let { rows, count } = await Order.findAndCountAll({
       where: {
@@ -104,10 +122,13 @@ exports.getTransactions = async (req, res) => {
       attributes: {
         exclude: ['updatedAt', 'user_id'],
       },
+      offset: isAdmin ? offset : 0,
+      limit: isAdmin ? limit : maxLimit,
       order: [['createdAt', 'DESC']],
     });
 
     let resultOrders = JSON.parse(JSON.stringify(rows));
+    countData = JSON.parse(JSON.stringify(countData)).length;
 
     resultOrders = resultOrders.map((order) => {
       let totalPrice = 0;
@@ -142,7 +163,7 @@ exports.getTransactions = async (req, res) => {
     res.status(200).json({
       status: 200,
       message: 'Successfully!',
-      countData: count,
+      countData: countData,
       data: resultOrders,
     });
   } catch (error) {
@@ -214,16 +235,20 @@ exports.updateStatusTransaction = async (req, res) => {
       // convert to json object
       const newResultOrder = JSON.parse(JSON.stringify(resultOrder));
       // admin update status approve
-      const resl = await Order.update({ status }, { where: whereCondition });
-      newResultOrder.products.map(async (product) => {
-        const newStock = product.orders_products.stock + product.orderQuantity;
 
-        await Product.update(
-          { stock: newStock },
-          { where: { id: product.product_id } },
-        );
-      });
-      console.log(newResultOrder.products[0]);
+      const resl = await Order.update({ status }, { where: whereCondition });
+
+      if (status.toLowerCase() === 'cancel') {
+        newResultOrder.products.map(async (product) => {
+          const newStock =
+            product.orders_products.stock + product.orderQuantity;
+
+          await Product.update(
+            { stock: newStock },
+            { where: { id: product.product_id } },
+          );
+        });
+      }
     }
 
     res.status(200).json({

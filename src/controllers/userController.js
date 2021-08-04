@@ -1,6 +1,7 @@
+const bcrypt = require('bcrypt');
+const fs = require('fs');
 const { User, Role } = require('../../models');
 const { updateUserSchema } = require('../utils/schema/authSchema');
-const fs = require('fs');
 const { pathImage, baseUrlImage } = require('../utils/config');
 
 exports.getAllUsers = async (req, res) => {
@@ -122,13 +123,16 @@ exports.updateUser = async (req, res) => {
       const SALT = 10;
       const hashedPassword = await bcrypt.hash(payload.password, SALT);
       payload = { ...payload, password: hashedPassword };
-      
+
       await User.update(payload, { where: { id } });
     }
 
     res.status(200).json({
       status: 200,
       message: 'Successfuly Updated profile!',
+      photo: !req.files.imageFile
+        ? null
+        : `${baseUrlImage}${req.files.imageFile[0].filename}`,
     });
   } catch (error) {
     console.log(error);
