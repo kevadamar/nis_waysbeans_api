@@ -159,7 +159,7 @@ exports.getDetailCart = async (req, res) => {
         {
           model: Product,
           as: 'product',
-          attributes: ['name', 'photo', ['price', 'product_price']],
+          attributes: ['name', 'photo', ['price', 'product_price'], 'stock'],
         },
       ],
       attributes: {
@@ -170,10 +170,13 @@ exports.getDetailCart = async (req, res) => {
     });
 
     let totalPrice = 0;
+    let listStocks = [];
+
     resultDetailCart = JSON.parse(JSON.stringify(resultDetailCart));
 
     resultDetailCart = resultDetailCart.map((cart) => {
       totalPrice += parseInt(cart.total_price);
+      listStocks.push(cart.product.stock);
       const newProduct = {
         ...cart.product,
         photo: !cart.product.photo
@@ -195,6 +198,7 @@ exports.getDetailCart = async (req, res) => {
     res.status(200).json({
       data: {
         totalPrice,
+        listStocks,
         detailCarts: resultDetailCart,
       },
     });
