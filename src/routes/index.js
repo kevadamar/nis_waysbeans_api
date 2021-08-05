@@ -19,6 +19,8 @@ const {
   getProduct,
   createProduct,
   updateProduct,
+  getAllProductsByAdmin,
+  deleteProduct,
 } = require('../controllers/productController');
 const {
   getAllUsers,
@@ -46,6 +48,12 @@ router.patch(
 // Product route
 router.get('/products', getAllProducts);
 router.get('/product/:id', getProduct);
+router.delete(
+  '/product/:id',
+  authMiddleware,
+  adminAccessMiddleware,
+  deleteProduct,
+);
 router.post(
   '/product',
   authMiddleware,
@@ -53,13 +61,20 @@ router.post(
   uploadFileMiddleware('imageFile'),
   createProduct,
 );
-// router.patch(
-//   '/product/:id',
-//   authMiddleware,
-//   adminAccessMiddleware,
-//   uploadFileMiddleware('imageFile'),
-//   updateProduct,
-// );
+router.patch(
+  '/product/:id/update',
+  authMiddleware,
+  adminAccessMiddleware,
+  uploadFileMiddleware('imageFile'),
+  updateProduct,
+);
+
+router.get(
+  '/products/admin',
+  authMiddleware,
+  adminAccessMiddleware,
+  getAllProductsByAdmin,
+);
 
 // Cart route
 router.post('/add-cart/:product_id', authMiddleware, addCart);

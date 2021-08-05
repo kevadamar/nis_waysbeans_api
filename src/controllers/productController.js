@@ -24,7 +24,7 @@ exports.getAllProducts = async (req, res) => {
     res.status(200).json({
       status: 200,
       message: 'Successfully!',
-      counData: count,
+      countData: count,
       data: resultProducts,
     });
   } catch (error) {
@@ -63,6 +63,7 @@ exports.getProduct = async (req, res) => {
       data: {
         ...resultProduct,
         photo: `${baseUrlImage}${resultProduct.photo}`,
+        namePhoto: resultProduct.photo,
       },
     });
   } catch (error) {
@@ -136,7 +137,7 @@ exports.updateProduct = async (req, res) => {
 
     //handle if image changed
     if (req.files.imageFile) {
-      const { photo } = await Houses.findOne({
+      const { photo } = await Product.findOne({
         where: {
           id,
         },
@@ -167,5 +168,74 @@ exports.updateProduct = async (req, res) => {
       message: 'Internal Server Error',
       error,
     });
+  }
+};
+
+exports.getAllProductsByAdmin = async (req, res) => {
+  try {
+    let { page } = req.query;
+
+    const maxLimit = 50;
+
+    page = parseInt(page) + 1;
+
+    const limit = page === undefined ? 20 : 5;
+    const offset = page === undefined ? 0 : (page - 1) * limit;
+
+    const { rows, count } = await Product.findAndCountAll({
+      attributes: {
+        exclude: ['createdAt', 'updatedAt'],
+      },
+      offset,
+      limit,
+      order: [['createdAt', 'DESC']],
+    });
+    let resultProducts = JSON.parse(JSON.stringify(rows));
+    resultProducts = resultProducts.map((product) => ({
+      ...product,
+      photo: `${baseUrlImage}${product.photo}`,
+    }));
+    res.status(200).json({
+      status: 200,
+      message: 'Successfully!',
+      countData: count,
+      data: resultProducts,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+      error,
+    });
+    console.log(error);
+  }
+};
+
+exports.deleteProduct = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const resultDelete = await Product.destroy({
+      where: { id },
+    });
+
+    if (!resultDelete) {
+      return res.status(404).json({
+        status: 404,
+        message: 'Product Not Found!',
+      });
+    }
+
+    res.status(200).json({
+      status: 200,
+      message: 'Successfully Deleted Product!',
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+      error,
+    });
+    console.log(error);
   }
 };
