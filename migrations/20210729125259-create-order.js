@@ -1,31 +1,41 @@
 'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('user', {
+    await queryInterface.createTable('order', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
+      user_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'user',
+          key: 'id',
+        },
+      },
+      name: {
+        type: Sequelize.STRING,
+      },
       email: {
         type: Sequelize.STRING,
       },
-      password: {
+      possCode: {
         type: Sequelize.STRING,
       },
-      fullname: {
+      address: {
+        type: Sequelize.TEXT,
+      },
+      phone: {
         type: Sequelize.STRING,
       },
-      photo: {
+      attachment: {
         type: Sequelize.STRING,
       },
-      role_id: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'role',
-          key: 'id',
-        },
+      status: {
+        type: Sequelize.STRING,
+        defaultValue: 'Waiting Approve',
       },
       createdAt: {
         allowNull: false,
@@ -35,11 +45,13 @@ module.exports = {
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP()'),
+        defaultValue: Sequelize.literal(
+          'CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP()',
+        ),
       },
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('user');
+    await queryInterface.dropTable('order');
   },
 };

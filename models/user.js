@@ -13,6 +13,16 @@ module.exports = (sequelize, DataTypes) => {
         as: 'role',
         foreignKey: 'role_id',
       });
+
+      User.hasMany(models.Cart, {
+        as: 'carts',
+        foreignKey: 'user_id',
+      });
+
+      User.hasMany(models.Order, {
+        as: 'orders',
+        foreignKey: 'user_id',
+      });
     }
   }
   User.init(
@@ -20,6 +30,7 @@ module.exports = (sequelize, DataTypes) => {
       email: DataTypes.STRING,
       password: DataTypes.STRING,
       fullname: DataTypes.STRING,
+      photo: DataTypes.STRING,
     },
     {
       sequelize,
