@@ -21,6 +21,7 @@ const {
   updateProduct,
   getAllProductsByAdmin,
   deleteProduct,
+  getProductAdmin,
 } = require('../controllers/productController');
 const {
   getAllUsers,
@@ -48,6 +49,14 @@ router.patch(
 // Product route
 router.get('/products', getAllProducts);
 router.get('/product/:id', getProduct);
+
+// product route admin access
+router.get(
+  '/product/:id/detail',
+  authMiddleware,
+  adminAccessMiddleware,
+  getProductAdmin,
+);
 router.delete(
   '/product/:id',
   authMiddleware,
@@ -77,10 +86,10 @@ router.get(
 );
 
 // Cart route
-router.post('/add-cart/:product_id', authMiddleware, addCart);
-router.post('/minus-cart/:product_id', authMiddleware, minusCart);
-router.get('/detail-cart', authMiddleware, getDetailCart);
-router.get('/count-cart', authMiddleware, getCountCart);
+router.post('/cart/:product_id/add', authMiddleware, addCart);
+router.post('/cart/:product_id/min', authMiddleware, minusCart);
+router.get('/cart/detail', authMiddleware, getDetailCart);
+router.get('/cart/count', authMiddleware, getCountCart);
 router.delete('/cart/:cart_id/delete', authMiddleware, deleteCart);
 
 // checkout
