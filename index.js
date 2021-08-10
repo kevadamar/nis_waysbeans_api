@@ -1,6 +1,15 @@
 require('dotenv').config();
 const express = require('express');
 const app = express();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http, {
+  cors: {
+    origin: 'http://localhost:3000',
+  },
+});
+
+require('./src/socket').socketIO(io);
+
 // routes
 const router = require('./src/routes');
 const cors = require('cors');
@@ -14,4 +23,4 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/v1/', router);
 
-app.listen(PORT, () => console.log(`Your app is running in port : ${PORT}`));
+http.listen(PORT, () => console.log(`Your app is running in port : ${PORT}`));
