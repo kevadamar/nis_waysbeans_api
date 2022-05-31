@@ -1,14 +1,11 @@
-const jwt = require('jsonwebtoken');
 const { Order, Order_product, Product } = require('../../models');
+const jwt = require('jsonwebtoken');
 
 module.exports.socketIO = (io) => {
-  // middleware
   io.use((socket, next) => {
-    // token
     const token = socket.handshake.query.token;
 
     if (token) {
-      // decoded
       const secretKey = process.env.SECRET_KEY;
 
       const verified = jwt.verify(token, secretKey, (error, decoded) => {
@@ -19,19 +16,18 @@ module.exports.socketIO = (io) => {
         }
       });
 
-      if (verified === -1) {
-        next(new Error('invalid credentials!'));
+      if (verified) {
+        next(new Error('invalid token'));
       }
 
       socket.user = verified;
 
       next();
     } else {
-      next(new Error('unauthorized!'));
+      next(new Error('not valid'));
     }
   });
 
-  // listen connection
   io.on('connection', (socket) => {
     try {
       const email = socket.user.email;
@@ -40,24 +36,25 @@ module.exports.socketIO = (io) => {
       socket.join(`room_${email}`);
 
       socket.on('load-notifications', async () => {
-        const resultNotif = await getOrder();
+        const resultNotif = await getNotif();
 
         io.to(`room_${emailAdmin}`).emit('new-notifications', resultNotif);
       });
 
       socket.on('send-notifications', async () => {
-        const resultNotif = await getOrder();
+        const resultNotif = await getNotif();
 
         io.to(`room_${emailAdmin}`).emit('new-notifications', resultNotif);
       });
+
+      socket.on('disconnect', () => socket.disconnect());
     } catch (error) {
-      console.log(`error`, error);
-      throw new Error('error server socket');
+      throw new Error(error);
     }
   });
 };
 
-const getOrder = async () => {
+const getNotif = async () => {
   try {
     let resultNotif = await Order.findAll({
       where: {
@@ -67,7 +64,7 @@ const getOrder = async () => {
         {
           model: Order_product,
           as: 'products',
-          attributes: ['orderQuantity'],
+          attributes: ['order_id'],
           include: [
             {
               model: Product,
@@ -83,19 +80,18 @@ const getOrder = async () => {
     });
 
     resultNotif = JSON.parse(JSON.stringify(resultNotif));
-    resultNotif = resultNotif.map((result) => {
-      return {
-        id: result.id,
-        name: result.name,
-        product_name: result.products
-          .map((product) => product.orders_products.name)
-          .join(', '),
-      };
-    });
+
+    resultNotif = resultNotif.map((notif) => ({
+      id: notif.id,
+      name: notif.name,
+      product_name: notif.products.map(
+        (product) => product.orders_products.name,
+      ),
+    }));
 
     return resultNotif;
   } catch (error) {
-    console.log(`error`, error);
-    return 'internal server error';
+    console.log(error);
+    return 'err db';
   }
 };
